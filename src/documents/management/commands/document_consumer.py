@@ -64,15 +64,22 @@ def _consume(filepath):
     # Total wait time: up to 500ms
     os_error_retry_count: Final[int] = 50
     os_error_retry_wait: Final[float] = 0.01
+    file_size_retry_wait: Final[int] = 10
 
     read_try_count = 0
     file_open_ok = False
     os_error_str = None
+    file_size = 0
 
     while (read_try_count < os_error_retry_count) and not file_open_ok:
         try:
             with open(filepath, "rb"):
-                file_open_ok = True
+                file_size_new = os.path.getsize(filepath)
+                if file_size != file_size_new:
+                    file_size = file_size_new
+                    sleep(file_size_retry_wait)
+                else:
+                    file_open_ok = True
         except OSError as e:
             read_try_count += 1
             os_error_str = str(e)
